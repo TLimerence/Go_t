@@ -1,28 +1,39 @@
 package main
 
 import (
-    "fmt"
-    "time"
+	"fmt"
+	"sync"
 )
 
 func main() {
-    fmt.Println("In main()")
-    go longWait()
-    go shortWait()
-    fmt.Println("About to sleep in main()")
-    // sleep works with a Duration in nanoseconds (ns) !
-    time.Sleep(10 * 1e9)
-    fmt.Println("At the end of main()")
+	ch := make(chan string)
+	var wg sync.WaitGroup
+
+	wg.Add(2)
+
+	go sendData(ch, &wg)
+	go receiveData(ch, &wg)
+
+	wg.Wait()
 }
 
-func longWait() {
-    fmt.Println("Beginning longWait()")
-    time.Sleep(5 * 1e9) // sleep for 5 seconds
-    fmt.Println("End of longWait()")
+func sendData(ch chan string, wg *sync.WaitGroup) {
+	defer wg.Done()
+	defer close(ch)
+
+	ch <- "1"
+	ch <- "2"
+	ch <- "3"
+	ch <- "4"
+	ch <- "5"
+	ch <- "6"
+	ch <- "7"
 }
 
-func shortWait() {
-    fmt.Println("Beginning shortWait()")
-    time.Sleep(2 * 1e9) // sleep for 2 seconds
-    fmt.Println("End of shortWait()")
+func receiveData(ch chan string, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	for input := range ch {
+		fmt.Println(input)
+	}
 }
